@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: deep-agent-daily
+spec:
+  schedule: "0 9 * * *" # Runs at 09:00 UTC daily
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: deep-agent
+            image: registry.digitalocean.com/your-registry/deep-agent:latest
+            imagePullPolicy: Always
+            envFrom:
+            - secretRef:
+                name: deep-agent-secrets
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "500m"
+              limits:
+                memory: "1Gi"
+                cpu: "1000m"
+          restartPolicy: OnFailure
