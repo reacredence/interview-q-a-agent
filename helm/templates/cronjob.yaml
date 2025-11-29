@@ -17,6 +17,7 @@ spec:
         spec:
           imagePullSecrets:
           - name: cerebrone-dev
+          {{- if .Values.nodeAffinity.excludedNodes }}
           affinity:
             nodeAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -25,7 +26,10 @@ spec:
                   - key: kubernetes.io/hostname
                     operator: NotIn
                     values:
-                    - cerechat-node-pool-l9o29
+                    {{- range .Values.nodeAffinity.excludedNodes }}
+                    - {{ . | quote }}
+                    {{- end }}
+          {{- end }}
           containers:
           - name: interview-q-a-agent
             image: "{{ .Values.image.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
