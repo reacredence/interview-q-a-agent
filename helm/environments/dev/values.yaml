@@ -8,6 +8,16 @@ replicaCount: 1
 
 namespace: interview-q-a-agent
 
+nodeAffinity:
+  # List of node hostnames to exclude from scheduling
+  excludedNodes:
+    - cerechat-node-pool-l9o29
+
+deployment:
+  # Override command to keep container running (since default CMD runs batch_runner.py which exits)
+  # Use sleep infinity to keep the pod alive, or set to null to use Dockerfile CMD
+  command: ["sleep", "infinity"]
+
 service:
   type: ClusterIP
   port: 8000
