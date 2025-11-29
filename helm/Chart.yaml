@@ -1,0 +1,6 @@
+apiVersion: v2
+name: interview-q-a-agent
+description: Helm chart for Interview Q&A Agent Service (Deep Agent)
+version: 0.1.0
+appVersion: "1.0.0"
+

@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: interview-q-a-agent-daily
+  namespace: {{ .Values.namespace }}
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  concurrencyPolicy: {{ .Values.cronjob.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+          - name: cerebrone-dev
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                    - cerechat-node-pool-l9o29
+          containers:
+          - name: interview-q-a-agent
+            image: "{{ .Values.image.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            command: ["python", "batch_runner.py"]
+            envFrom:
+            - configMapRef:
+                name: interview-q-a-agent-config
+            - secretRef:
+                name: interview-q-a-agent-secret
+            resources:
+              requests:
+                memory: {{ .Values.cronjob.resources.requests.memory }}
+                cpu: {{ .Values.cronjob.resources.requests.cpu }}
+              limits:
+                memory: {{ .Values.cronjob.resources.limits.memory }}
+                cpu: {{ .Values.cronjob.resources.limits.cpu }}
+          restartPolicy: OnFailure
+
