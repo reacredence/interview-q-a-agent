@@ -7,4 +7,3 @@ boto3
 markdown
 weasyprint
 schedule
-
