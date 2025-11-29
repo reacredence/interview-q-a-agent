@@ -5,5 +5,6 @@ __pycache__/
 .env.example
 *.pdf
 *.txt
+!**/requirements.txt
 .DS_Store
 output/
