@@ -1,7 +1,10 @@
 venv/
 __pycache__/
 .env
+.env.local
+.env.example
 *.pdf
 *.txt
+!**/requirements.txt
 .DS_Store
 output/

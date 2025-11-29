@@ -1,0 +1,9 @@
+python-dotenv
+langchain-core
+langchain-openai
+langchain-community
+langgraph
+boto3
+markdown
+weasyprint
+schedule

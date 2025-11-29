@@ -1,0 +1,148 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+    inputs:
+      env:
+        type: choice
+        description: Select Environment
+        required: true
+        options:
+          - main
+
+permissions:
+  actions: read
+  contents: write
+  security-events: write
+
+jobs:
+  docker_build_push_dev:
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' || github.event_name == 'pull_request') && github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install DOCTl Command
+        run: |
+          sudo snap install doctl
+          sudo snap connect doctl:dot-docker
+
+      - name: Login to Digital Ocean Registry
+        run: |
+          doctl registry login --access-token ${{ secrets.DO_ACCOUNT_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build \
+            -t interview-q-a-agent-dev:${{ github.sha }} \
+            -f deep-agent/Dockerfile \
+            deep-agent/
+          docker tag interview-q-a-agent-dev:${{ github.sha }} registry.digitalocean.com/cerebrone-dev/interview-q-a-agent-dev:${{ github.sha }}
+          docker push registry.digitalocean.com/cerebrone-dev/interview-q-a-agent-dev:${{ github.sha }}
+
+  deploy_to_kubernetes_dev:
+    needs: docker_build_push_dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install DOCTL command
+        run: |
+          sudo snap install doctl
+          sudo snap connect doctl:kube-config
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure Digital Ocean Credentials
+        run: |
+          doctl auth init --access-token ${{ secrets.DO_ACCOUNT_TOKEN }}
+          doctl kubernetes cluster kubeconfig save 37a5f702-e1a8-4732-9490-f5e047b5a724
+
+      - name: Deploy Helm on DOKS
+        run: |
+          helm upgrade --install interview-q-a-agent helm/ \
+            --namespace ${{ vars.NAMESPACE_DEV }} \
+            --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --set namespace=${{ vars.NAMESPACE_DEV }} \
+            --set openaiApiKey=${{ secrets.OPENAI_API_KEY_DEV }} \
+            --set serpapiApiKey=${{ secrets.SERPAPI_API_KEY_DEV }} \
+            --set s3EndpointUrl=${{ secrets.S3_ENDPOINT_URL_DEV }} \
+            --set s3AccessKeyId=${{ secrets.S3_ACCESS_KEY_ID_DEV }} \
+            --set s3SecretAccessKey=${{ secrets.S3_SECRET_ACCESS_KEY_DEV }} \
+            --set s3BucketName=${{ secrets.S3_BUCKET_NAME_DEV }} \
+            --set s3RegionName=${{ secrets.S3_REGION_NAME_DEV }} \
+            -f helm/environments/dev/values.yaml \
+            --wait --timeout 10m
+
+  docker_build_push_prod:
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' || github.event_name == 'pull_request') && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install DOCTl Command
+        run: |
+          sudo snap install doctl
+          sudo snap connect doctl:dot-docker
+
+      - name: Login to Digital Ocean Registry
+        run: |
+          doctl registry login --access-token ${{ secrets.DO_ACCOUNT_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          if [ -z "${{ secrets.OPENAI_API_KEY_PROD }}" ] || [ -z "${{ secrets.SERPAPI_API_KEY_PROD }}" ]; then
+            echo "ERROR: Required secrets OPENAI_API_KEY_PROD or SERPAPI_API_KEY_PROD are missing!"
+            exit 1
+          fi
+          docker build \
+            -t interview-q-a-agent-prod:${{ github.sha }} \
+            -f deep-agent/Dockerfile \
+            deep-agent/
+          docker tag interview-q-a-agent-prod:${{ github.sha }} registry.digitalocean.com/cerebrone-dev/interview-q-a-agent-prod:${{ github.sha }}
+          docker push registry.digitalocean.com/cerebrone-dev/interview-q-a-agent-prod:${{ github.sha }}
+
+  deploy_to_kubernetes_prod:
+    needs: docker_build_push_prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install DOCTL command
+        run: |
+          sudo snap install doctl
+          sudo snap connect doctl:kube-config
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure Digital Ocean Credentials
+        run: |
+          doctl auth init --access-token ${{ secrets.DO_ACCOUNT_TOKEN }}
+          doctl kubernetes cluster kubeconfig save 159d34dc-9948-4fac-a42b-786ff9271beb
+
+      - name: Deploy Helm on DOKS
+        run: |
+          helm upgrade --install interview-q-a-agent helm/ \
+            --namespace ${{ vars.NAMESPACE_PROD }} \
+            --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --set namespace=${{ vars.NAMESPACE_PROD }} \
+            --set openaiApiKey=${{ secrets.OPENAI_API_KEY_PROD }} \
+            --set serpapiApiKey=${{ secrets.SERPAPI_API_KEY_PROD }} \
+            --set s3EndpointUrl=${{ secrets.S3_ENDPOINT_URL_PROD }} \
+            --set s3AccessKeyId=${{ secrets.S3_ACCESS_KEY_ID_PROD }} \
+            --set s3SecretAccessKey=${{ secrets.S3_SECRET_ACCESS_KEY_PROD }} \
+            --set s3BucketName=${{ secrets.S3_BUCKET_NAME_PROD }} \
+            --set s3RegionName=${{ secrets.S3_REGION_NAME_PROD }} \
+            -f helm/environments/prod/values.yaml \
+            --wait --timeout 10m
+

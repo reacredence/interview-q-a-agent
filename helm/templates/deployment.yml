@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: interview-q-a-agent
+  namespace: {{ .Values.namespace }}
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: interview-q-a-agent
+  template:
+    metadata:
+      labels:
+        app: interview-q-a-agent
+    spec:
+      imagePullSecrets:
+      - name: cerebrone-dev
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                - cerechat-node-pool-l9o29
+      containers:
+      - name: interview-q-a-agent
+        image: "{{ .Values.image.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: interview-q-a-agent-config
+        - secretRef:
+            name: interview-q-a-agent-secret
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1
+            memory: 1Gi
+
