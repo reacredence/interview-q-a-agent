@@ -15,8 +15,8 @@ nodeAffinity:
 
 deployment:
   # Override command to keep container running (since default CMD runs batch_runner.py which exits)
-  # Use sleep infinity to keep the pod alive, or set to null to use Dockerfile CMD
-  command: ["sleep", "infinity"]
+  # Using Python to keep the pod alive (sleep command not available in python:3.11-slim)
+  command: ["python", "-c", "import time; time.sleep(999999)"]
 
 service:
   type: ClusterIP
