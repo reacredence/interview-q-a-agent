@@ -24,7 +24,7 @@ service:
 
 openaiApiKey: ""
 serpapiApiKey: ""
-s3EndpointUrl: "https://nyc3.digitaloceanspaces.com"
+s3EndpointUrl: "https://deep-agent-artifacts.nyc3.digitaloceanspaces.com"
 s3AccessKeyId: ""
 s3SecretAccessKey: ""
 s3BucketName: "deep-agent-artifacts"
