@@ -143,6 +143,5 @@ jobs:
             --set s3SecretAccessKey=${{ secrets.S3_SECRET_ACCESS_KEY_PROD }} \
             --set s3BucketName=${{ secrets.S3_BUCKET_NAME_PROD }} \
             --set s3RegionName=${{ secrets.S3_REGION_NAME_PROD }} \
-            -f helm/environments/prod/values.yaml \
-            --wait --timeout 10m
+            -f helm/environments/prod/values.yaml
 
