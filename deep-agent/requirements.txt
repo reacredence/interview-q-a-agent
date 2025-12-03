@@ -7,3 +7,4 @@ boto3
 markdown
 weasyprint
 schedule
+google-search-results

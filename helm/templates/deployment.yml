@@ -36,7 +36,10 @@ spec:
         image: "{{ .Values.image.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         {{- if .Values.deployment.command }}
-        command: {{ .Values.deployment.command }}
+        command:
+        {{- range .Values.deployment.command }}
+        - {{ . | quote }}
+        {{- end }}
         {{- end }}
         ports:
         - containerPort: 8000
