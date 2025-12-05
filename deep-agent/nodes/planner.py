@@ -2,9 +2,14 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import CommaSeparatedListOutputParser
 from state import AgentState
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 def planner_node(state: AgentState):
     topic = state["topic"]
+    
+    logger.info("Planning research queries", topic=topic)
     
     llm = ChatOpenAI(model="gpt-4o", temperature=0)
     
@@ -23,4 +28,8 @@ def planner_node(state: AgentState):
     
     queries = chain.invoke({"topic": topic})
     
-    return {"research_queries": queries}
+    # Clean up queries - remove extra quotes and whitespace
+    cleaned_queries = [q.strip().strip('"').strip("'") for q in queries]
+    logger.info("Generated research queries", count=len(cleaned_queries), queries=cleaned_queries)
+    
+    return {"research_queries": cleaned_queries}

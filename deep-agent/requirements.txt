@@ -8,3 +8,14 @@ markdown
 weasyprint
 schedule
 google-search-results
+# FastAPI and web server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+# Pydantic v2 (includes pydantic.v1 for backward compatibility with langchain)
+pydantic==2.5.0
+# Ensure typing-extensions for compatibility
+typing-extensions>=4.8.0
+# Logging
+structlog==23.2.0
+# HTTP client (if needed for future extensions)
+httpx==0.25.2

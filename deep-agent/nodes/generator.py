@@ -2,13 +2,24 @@ import json
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from state import AgentState
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 def generator_node(state: AgentState):
     paper = state["selected_paper"]
     topic = state["topic"]
     
+    logger.info("Starting question generation", topic=topic, has_paper=paper is not None)
+    
     if not paper:
+        logger.warning("No paper selected, cannot generate question")
         return {"generated_question": None}
+    
+    logger.debug("Generator state", 
+                 paper_title=paper.get('title', 'Unknown'),
+                 has_feedback=bool(state.get('feedback')),
+                 has_existing_question=bool(state.get('generated_question')))
         
     llm = ChatOpenAI(model="gpt-4o", temperature=0.7)
     
@@ -73,18 +84,17 @@ def generator_node(state: AgentState):
         
     try:
         generated_question = json.loads(content)
-        # Ensure citation includes the URL
+        logger.info("Successfully parsed JSON", has_question=bool(generated_question.get('question')))
+        
         # Ensure citation includes the URL
         citation = generated_question.get('citation') or ''
         if paper['url'] not in citation:
             generated_question['citation'] = f"{paper['title']} - {paper.get('authors', 'Unknown')} ({paper['url']})"
             
         return {"generated_question": generated_question}
-    except json.JSONDecodeError:
-        print(f"Failed to parse generator output: {content}")
+    except json.JSONDecodeError as e:
+        logger.error("Failed to parse JSON", error=str(e), content_preview=content[:500])
         return {"generated_question": None}
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"Generator error: {e}")
+        logger.error("Exception in generator", error=str(e), exc_info=True)
         return {"generated_question": None}

@@ -31,5 +31,10 @@ RUN mkdir -p output
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Default command (can be overridden by CronJob)
-CMD ["python", "batch_runner.py"]
+# Expose port 8000 for FastAPI
+EXPOSE 8000
+
+# Default command: run FastAPI server
+# Note: CronJob overrides this CMD to run batch_runner.py for daily PDF generation
+# The batch_runner.py script is still needed for the CronJob, but not for the API server
+CMD ["python", "-m", "uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
