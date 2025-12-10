@@ -35,10 +35,12 @@ spec:
       - name: interview-q-a-agent
         image: "{{ .Values.image.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        {{- if .Values.deployment.command }}
+        {{- with .Values.deployment }}
+        {{- if .command }}
         command:
-        {{- range .Values.deployment.command }}
+        {{- range .command }}
         - {{ . | quote }}
+        {{- end }}
         {{- end }}
         {{- end }}
         ports:
