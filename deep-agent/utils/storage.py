@@ -49,7 +49,7 @@ def upload_file(file_name, object_name=None):
         # For DigitalOcean Spaces: https://bucket-name.region.digitaloceanspaces.com/object-name
         # Or generic S3 style
         if "digitaloceanspaces" in endpoint_url:
-            url = f"https://{bucket_name}.{region_name}.digitaloceanspaces.com/{object_name}"
+            url = f"https://{bucket_name}.{region_name}.digitaloceanspaces.com/{bucket_name}/{object_name}"
         else:
             url = f"{endpoint_url}/{bucket_name}/{object_name}"
             

@@ -2,12 +2,19 @@ import json
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from state import AgentState
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 def selector_node(state: AgentState):
     papers = state["papers"]
     topic = state["topic"]
     
+    paper_count = len(papers) if papers else 0
+    logger.info("Selecting paper", topic=topic, paper_count=paper_count)
+    
     if not papers:
+        logger.warning("No papers found, cannot select")
         # Fallback if no papers found
         return {"selected_paper": None}
 
@@ -46,8 +53,12 @@ def selector_node(state: AgentState):
         
     try:
         selected_paper = json.loads(content)
+        logger.info("Successfully selected paper", title=selected_paper.get('title', 'Unknown'))
         return {"selected_paper": selected_paper}
-    except json.JSONDecodeError:
-        print(f"Failed to parse selector output: {content}")
+    except json.JSONDecodeError as e:
+        logger.warning("Failed to parse JSON, falling back to first paper", error=str(e), content_preview=content[:500])
         # Fallback to first paper
-        return {"selected_paper": papers[0] if papers else None}
+        if papers:
+            logger.info("Using fallback paper", title=papers[0].get('title', 'Unknown'))
+            return {"selected_paper": papers[0]}
+        return {"selected_paper": None}
