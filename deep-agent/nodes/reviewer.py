@@ -1,6 +1,9 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from state import AgentState
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 def reviewer_node(state: AgentState):
     question = state["generated_question"]
@@ -36,7 +39,15 @@ def reviewer_node(state: AgentState):
     
     feedback = chain.invoke({}).content
     
-    # Increment iteration
+    # Increment iteration (ensure it's an integer)
     current_iteration = state.get("iteration", 0)
+    if not isinstance(current_iteration, int):
+        current_iteration = 0
     
-    return {"feedback": feedback, "iteration": current_iteration + 1}
+    new_iteration = current_iteration + 1
+    logger.info("Review complete", 
+                current_iteration=current_iteration, 
+                new_iteration=new_iteration,
+                feedback_preview=feedback[:200] if feedback else None)
+    
+    return {"feedback": feedback, "iteration": new_iteration}
