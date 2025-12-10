@@ -14,9 +14,8 @@ nodeAffinity:
     - cerechat-node-pool-l9o29
 
 deployment:
-  # Override command to keep container running (since default CMD runs batch_runner.py which exits)
-  # Using Python to keep the pod alive (sleep command not available in python:3.11-slim)
-  command: ["python", "-c", "import time; time.sleep(999999)"]
+  # Run FastAPI server (uvicorn) - default CMD in Dockerfile runs uvicorn
+  # No command override needed - uses Dockerfile CMD
 
 service:
   type: ClusterIP
